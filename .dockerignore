@@ -1,0 +1,14 @@
+# keep data, caches, outputs and local files out of the image
+.git
+data/
+cache/
+outputs/
+tests/_work/
+**/__pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+config.local.yaml
+*.local.yaml
+config_resolved.yaml

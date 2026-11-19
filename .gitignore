@@ -1,0 +1,54 @@
+# --- data: never commit patient data (cohort tables, scans, segmentations) ---
+data/
+*.csv
+*.xlsx
+*.xls
+*.nii
+*.nii.gz
+*.nrrd
+*.dcm
+*.mha
+*.mhd
+
+# --- caches, run outputs, smoke-test work folder ---
+cache/
+outputs/
+tests/_work/
+features*/
+volumes/
+segres_*/
+results_*/
+report*/
+
+# --- model weights and arrays ---
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+*.npz
+*.npy
+*.pkl
+*.joblib
+
+# --- local configuration (keep config.yaml as the template) ---
+config.local.yaml
+*.local.yaml
+config_resolved.yaml
+
+# --- Python / tooling ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+.env
+.vscode/
+.idea/
+*.log
+*.swp
+.DS_Store

@@ -1,0 +1,74 @@
+# Configuration of the CT-FM oropharyngeal-cancer prognosis pipeline.
+#
+# Relative paths are taken from the folder of this file. Every value can be overridden with an
+# environment variable CTFM_<SECTION>_<KEY> (e.g. CTFM_DATA_RADCURE_IMAGES=/data/radcure/images),
+# and another file can be used with CTFM_CONFIG=/path/to/my_config.yaml.
+#   python pipeline/ctfm_config.py show     # resolved configuration
+#   python pipeline/ctfm_config.py check    # which inputs exist
+#
+# Only inputs, locations and hardware are configured here. The analysis settings (splits, seeds,
+# models, bootstrap) are fixed in the code: they are the ones that produced the published numbers.
+
+data:
+  # Cohort tables (one row per patient).
+  # "original" tables -- the analysis files of the submitted manuscript (used for OS and RFS):
+  radcure_csv: data/new_radcure_data.csv
+  maastro_csv: data/new_maastro_data.csv
+  # "corrected" tables -- written by data_preparation/build_{radcure,maastro}_corrected.py (used for LR and DM):
+  radcure_csv_corrected: data/new_radcure_data_corrected_main.csv
+  maastro_csv_corrected: data/new_maastro_data_corrected_main.csv
+  # Second Maastro export with the pure LR / DM events (input of build_maastro_corrected.py only):
+  maastro_pure_events_csv: data/maastro_pure_lr_dm_events.csv
+  # Pre-processed CT volumes, one NIfTI per patient (file name = the table's img_nn_id):
+  radcure_images: data/imagesTs_radcure
+  maastro_images: data/imagesTs_maastro
+  # Tumour (label 1) / nodal (label 2) segmentations on the same grid -- explainability step only.
+  # File name = the scan's name without the trailing "_0000" (e.g. X_0000.nii.gz -> X.nii.gz).
+  radcure_masks: data/predsTs_radcure
+  maastro_masks: data/predsTx_maastro
+
+cache:
+  # CT-FM / SPECTRE feature files and pre-processed scan arrays (re-usable across runs, can be large):
+  #   features_paper_{st,lp,lp2}/  features_spectre_paper/  volumes/paper_{lp,lp2}/
+  dir: cache
+
+outputs:
+  # Run folders <dir>/<YYYYMMDD_HHMMSS>_study/ and the post-processing folders.
+  dir: outputs
+  # Final, renamed figures and tables (written by make_paper_style_figures.py).
+  final_dir: outputs/figures_and_tables
+  # Run to post-process (run_final_figures.sh: make_paper_style_figures.py, refit_segres_lrf_dm.py,
+  # explainability_maps.py): a run id "YYYYMMDD_HHMMSS" (quoted), or null for the newest run in outputs.dir.
+  paper_run: null
+
+model:
+  # HuggingFace id (or local folder) of the frozen CT-FM encoder.
+  ctfm_weights: project-lighter/ct_fm_feature_extractor
+
+submitted:
+  # OPTIONAL. Folder of the submitted study's original code and saved models ("working_space"):
+  # saved CT-FM-ST / CT-FM-LP / SegRes-E2E networks, per-seed result CSVs, and
+  # generate_calibration_pytorch_head.py. Needed only by `runner.py verify` and by
+  # optional/score_paper_networks_ibs.py. null = those steps are skipped.
+  workspace: null
+  # OPTIONAL. Text/markdown export of the submitted manuscript (paper-vs-run table in the report).
+  paper_md: null
+  # SegRes-E2E OS/RFS IBS and calibration in Table S6 / Figure 5 from the submitted study's own saved
+  # networks (outputs/paper_networks_ibs/, made by optional/score_paper_networks_ibs.py):
+  #   auto = use them when that folder exists, else the re-trained networks;  on = required;  off = never.
+  use_saved_segres_networks: auto
+
+runtime:
+  # Python interpreter of the environment (environment.yml / requirements.txt).
+  python: python3
+  # GPUs for the SegRes-E2E workers (one worker per GPU; the first one also extracts CT-FM features).
+  gpus: "0"
+  # GPU for the SPECTRE feature extraction.
+  spectre_gpu: 0
+  # Device of the CT-FM feature extraction (runner.py features): auto = CUDA when available, else CPU.
+  device: auto
+
+testing:
+  # For the synthetic smoke test ONLY (tests/smoke_test.sh). Keep these defaults for real runs.
+  random_init_encoder: false   # true = randomly initialised CT-FM encoder (no download; meaningless features)
+  bootstrap_b: null            # number of bootstrap resamples; null = the pipeline's 2,000
